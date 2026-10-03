@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  TIER_1_ANALYST
+  TIER_2_ANALYST
+  SOC_MANAGER
+  ADMIN
+  AI_SERVICE
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+
+  users         User[]
+  assets        Asset[]
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
+}
+
+model User {
+  id           String     @id @default(cuid())
+  tenantId     String
+  email        String     @unique          // global unique so login needs no tenant slug
+  passwordHash String
+  fullName     String
+  role         Role
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  refreshTokens RefreshToken[]
+
+  @@index([tenantId])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tenantId  String
+  tokenHash String    @unique               // store only the SHA-256 hash
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([userId])
+}
+
+model Asset {
+  id          String   @id @default(cuid())
+  tenantId    String
+  hostname    String
+  criticality Int      @default(50)         // 0-100, used by the M4 risk engine
+  owner       String?
+  environment String   @default("production")
+  createdAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, hostname])
+  @@index([tenantId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  tenantId   String
+  actorId    String?
+  operation  String                          // e.g. USER_REGISTERED, LOGIN_SUCCEEDED
+  objectType String?
+  objectId   String?
+  before     Json?
+  after      Json?
+  reason     String?
+  requestId  String?
+  createdAt  DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, createdAt])
+}
