@@ -78,8 +78,8 @@ A multi-tenant backend for a Security Operations Center (SOC) platform. It inges
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/<your-username>/<your-repo>.git
-cd <your-repo>
+git clone https://github.com/rajyadav2020/mitre-attacks.git
+cd =mitre-attacks
 npm install
 ```
 
@@ -228,6 +228,3 @@ Tests cover: register and `/me`, 401 without a token, cross-tenant 404, body `te
 
 Next up is **M2: Alert Ingestion**: Redis + BullMQ, MinIO raw storage, `IngestBatch` and `Alert` models, alert fingerprints, and idempotency keys. The target is uploading a 3,000-alert dataset and receiving a `202 Accepted` batch response.
 
-## License
-
-MIT (or choose your own)
